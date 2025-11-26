@@ -1,128 +1,335 @@
 [
   {
-    "title": "Vue3でコンポーネントを定義する最新の方法は？",
+    "title": "Composition APIとOptions APIの説明として**間違っている**のは？",
     "isMulti": false,
-    "code": "<script setup>\nimport { ref } from 'vue'\nconst count = ref(0)\n</script>",
     "options": [
-      { "key": "A", "text": "Options API" },
-      { "key": "B", "text": "Composition API with <script setup>" },
-      { "key": "C", "text": "Class Components" },
-      { "key": "D", "text": "Vue 2 API" }
+      { "key": "A", "text": "Options APIは機能ごとに分散（data、methods、computed分離）、Composition APIは論理ごとにグループ化" },
+      { "key": "B", "text": "Composition APIはTypeScriptのサポートがより良い" },
+      { "key": "C", "text": "Composition APIは必ずsetup関数または<script setup>と一緒に使用する必要がある" },
+      { "key": "D", "text": "大規模プロジェクトではComposition APIのコード再利用性が良い" }
+    ],
+    "correct": "C",
+    "explanation": "Composition APIはOptions APIの完全な代替品です。setup関数なしでも使用できます。実際には、CはComposition APIの最も重要な特性を誤解しています。"
+  },
+  {
+    "title": "<script setup>に関する説明として**正しい**もの：",
+    "isMulti": true,
+    "options": [
+      { "key": "A", "text": "<script setup>で定義した変数はテンプレートで自動的に使用可能" },
+      { "key": "B", "text": "<script setup>内でtop-level awaitを使用できる" },
+      { "key": "C", "text": "<script setup>内のインポートされたコンポーネントは直接使用可能" },
+      { "key": "D", "text": "<script setup>内ではこのオブジェクトにアクセスできる" }
+    ],
+    "correct": ["A", "B", "C"],
+    "explanation": "A、B、Cは<script setup>の特性です。Dは誤りで、<script setup>ではthisオブジェクトにアクセスできません。"
+  },
+  {
+    "title": "以下のコードの実行結果は？",
+    "isMulti": false,
+    "code": "const state = reactive({ count: 0 })\nconst { count } = state\ncount++\nconsole.log(state.count) // ?\nconsole.log(count) // ?",
+    "options": [
+      { "key": "A", "text": "1, 1" },
+      { "key": "B", "text": "0, 1" },
+      { "key": "C", "text": "1, 0" },
+      { "key": "D", "text": "0, 0" }
     ],
     "correct": "B",
-    "explanation": "<script setup>はVue 3の推奨される方法で、Composition APIをより簡潔に書くことができます。"
+    "explanation": "reactiveのプロパティを分割代入すると反応性が失われます。countは普通の変数になり、count++はstate.countに影響しません。toRefsを使用すべきです。"
   },
   {
-    "title": "Vue3のリアクティビティを実現するAPIは？",
+    "title": "refとreactiveの使い分けについて**正しい**もの：",
     "isMulti": true,
     "options": [
-      { "key": "A", "text": "ref()" },
-      { "key": "B", "text": "reactive()" },
-      { "key": "C", "text": "computed()" },
-      { "key": "D", "text": "data()" }
+      { "key": "A", "text": "refはあらゆるデータ型をラップでき、reactiveはオブジェクト型のみ" },
+      { "key": "B", "text": "テンプレート内ではrefは自動的に.valueが解除される" },
+      { "key": "C", "text": "reactiveはrefより常にパフォーマンスが優れている" },
+      { "key": "D", "text": "jsコード内ではrefは.valueでアクセスする必要があり、reactiveは直接アクセス" }
     ],
-    "correct": ["A", "B", "C"],
-    "explanation": "ref()、reactive()、computed()はすべてVue 3のリアクティビティAPIです。data()はOptions APIのものです。"
+    "correct": ["A", "B", "D"],
+    "explanation": "Cは誤りです。refとreactiveのパフォーマンスはほぼ同じで、選択は機能要件による、パフォーマンス最適化による必要があります。"
   },
   {
-    "title": "次のコードの出力は何ですか？",
-    "isMulti": false,
-    "code": "const count = ref(5)\ncount.value++\nconsole.log(count.value)",
+    "title": "computedの**正しい**使用方法は？",
+    "isMulti": true,
     "options": [
-      { "key": "A", "text": "5" },
-      { "key": "B", "text": "6" },
-      { "key": "C", "text": "undefined" },
-      { "key": "D", "text": "エラー" }
+      { "key": "A", "text": "computed内の依存値が変わらないと再計算されない（キャッシング機能）" },
+      { "key": "B", "text": "computedはgetterとsetterの両方を持つことができる" },
+      { "key": "C", "text": "computedの結果は自動的にrefでラップされる" },
+      { "key": "D", "text": "computedで依存値を自動的に追跡できる" }
+    ],
+    "correct": ["A", "B", "C", "D"],
+    "explanation": "すべてが正しいcomputedの特性です。computedは非常に強力で、キャッシング、カスタマイズ可能、自動追跡などの機能を備えています。"
+  },
+  {
+    "title": "以下のコードで、fullNameの計算は何回実行される？",
+    "isMulti": false,
+    "code": "const firstName = ref('John')\nconst lastName = ref('Doe')\nconst fullName = computed(() => {\n  console.log('computing')\n  return firstName.value + ' ' + lastName.value\n})\nconsole.log(fullName.value) // 第1回使用\nconsole.log(fullName.value) // 第2回使用\nfirstName.value = 'Jane'\nconsole.log(fullName.value) // 第3回使用",
+    "options": [
+      { "key": "A", "text": "3回" },
+      { "key": "B", "text": "2回" },
+      { "key": "C", "text": "1回（最初の使用時のみ）" },
+      { "key": "D", "text": "0回（computedは自動計算されない）" }
     ],
     "correct": "B",
-    "explanation": "ref()で作成した値にアクセスするには.valueを使用します。count.value++で6になります。"
+    "explanation": "1回目と2回目の出力はキャッシュから取得されます。firstNameが変更された後に1回再計算されます。合計2回です。"
   },
   {
-    "title": "Vue3でライフサイクルフックは？",
+    "title": "watchとwatchEffectの違い：",
     "isMulti": true,
     "options": [
-      { "key": "A", "text": "onMounted()" },
-      { "key": "B", "text": "onUnmounted()" },
-      { "key": "C", "text": "onUpdated()" },
-      { "key": "D", "text": "beforeCreate()" }
+      { "key": "A", "text": "watchは具体的な依存値を指定でき、watchEffectは依存値を自動的に追跡する" },
+      { "key": "B", "text": "watchEffectは非同期操作内のリアクティブ変数を追跡できない" },
+      { "key": "C", "text": "watchはimmediate: trueオプションで最初のコールバック実行が可能" },
+      { "key": "D", "text": "watchEffectはより単純なAPI" }
     ],
-    "correct": ["A", "B", "C"],
-    "explanation": "onMounted()、onUnmounted()、onUpdated()はVue 3のライフサイクルフックです。beforeCreate()はVue 2のものです。"
+    "correct": ["A", "C", "D"],
+    "explanation": "Bは誤りです。watchEffectは非同期操作の前のコードで依存値を追跡し、非同期内は新しい依存値を追跡しません。"
   },
   {
-    "title": "computed()は何に使用されますか？",
+    "title": "以下のコードの実行順序と結果は？",
     "isMulti": false,
-    "code": "const fullName = computed(() => {\n  return firstName.value + ' ' + lastName.value\n})",
+    "code": "const count = ref(0)\nwatch(\n  () => count.value,\n  (newVal, oldVal) => {\n    console.log(`count changed from ${oldVal} to ${newVal}`)\n  },\n  { immediate: true }\n)\ncount.value++",
     "options": [
-      { "key": "A", "text": "非同期処理の実行" },
-      { "key": "B", "text": "依存するデータから計算される値" },
-      { "key": "C", "text": "イベントハンドリング" },
-      { "key": "D", "text": "APIデータの取得" }
+      { "key": "A", "text": "先に「count changed from 0 to 0」、次に「count changed from 0 to 1」を出力" },
+      { "key": "B", "text": "「count changed from 0 to 1」のみ出力" },
+      { "key": "C", "text": "先に「count changed from undefined to 0」、次に「count changed from 0 to 1」を出力" },
+      { "key": "D", "text": "「count changed from 0 to 1」と「count changed from 0 to 1」を出力" }
+    ],
+    "correct": "A",
+    "explanation": "immediate: trueは即座に1回実行され、count.valueが0から0になり、その後値が変更されて0から1になります。"
+  },
+  {
+    "title": "Vue3のDiff（差分検出）アルゴリズムについて**正しい**もの：",
+    "isMulti": true,
+    "options": [
+      { "key": "A", "text": "Vue3は最長増加部分列（LIS）アルゴリズムを使用してリストのdiffを最適化している" },
+      { "key": "B", "text": "keyを指定したノードはkeyなしのノードより高速にdiffされる" },
+      { "key": "C", "text": "同じkeyを持つノードで位置が変更されると、ノードは直接移動できる" },
+      { "key": "D", "text": "リスト内ではインデックスをkeyとして使用するのが最適である" }
+    ],
+    "correct": ["A", "B", "C"],
+    "explanation": "Dは誤りです。インデックスをkeyとして使用すると、リストがソート、追加、削除される場合に問題が生じる可能性があります。安定したユニークidentifierを使用すべきです。"
+  },
+  {
+    "title": "v-forでkeyが重要な理由：",
+    "isMulti": false,
+    "options": [
+      { "key": "A", "text": "単にパフォーマンスを向上させるため" },
+      { "key": "B", "text": "Vueは各要素の同一性を識別し、正確にdiffを実行するため" },
+      { "key": "C", "text": "keyがないとエラーが発生する" },
+      { "key": "D", "text": "keyはDOM再利用の制御に使用される" }
     ],
     "correct": "B",
-    "explanation": "computed()は依存するデータから計算される値を作成します。自動的にキャッシュされ、依存値が変わるとリアクティブに更新されます。"
+    "explanation": "Vueはkeyを使用して、各要素がどれであるか、またはどのように変更されたかを追跡します。これはDOMの正確な更新とコンポーネント状態の保持を確保します。"
   },
   {
-    "title": "Vue3でテンプレートの条件分岐は？",
+    "title": "以下のコードで、「削除第1項」をクリック後、どのinputの値が失われる？",
+    "isMulti": false,
+    "code": "const items = ref([\n  { id: 1, name: 'A' },\n  { id: 2, name: 'B' },\n  { id: 3, name: 'C' }\n])\nconst deleteFirst = () => items.value.shift()\n// テンプレート\n// <div v-for=\"item in items\" :key=\"item.name\">\n//   <input :placeholder=\"`Item ${item.name}`\" />\n// </div>",
+    "options": [
+      { "key": "A", "text": "inputの値は失われない" },
+      { "key": "B", "text": "最初のinputの値のみが失われる" },
+      { "key": "C", "text": "最初と2番目のinputの値が失われる" },
+      { "key": "D", "text": "特定できない" }
+    ],
+    "correct": "C",
+    "explanation": "item.nameをkeyとして使用すると、アイテムが削除された後、残っているアイテムのkeyが変更されます。Vueはinput要素を再利用しますが、値は入力フィールドに固定されているため、マッピングが失われます。item.idを使用すべきです。"
+  },
+  {
+    "title": "Vue3のライフサイクルフック実行順序（作成から破棄まで）：",
+    "isMulti": false,
+    "options": [
+      { "key": "A", "text": "beforeCreate → created → beforeMount → mounted → beforeUpdate → updated → beforeUnmount → unmounted" },
+      { "key": "B", "text": "setup → beforeCreate → created → beforeMount → mounted → beforeUpdate → updated → beforeUnmount → unmounted" },
+      { "key": "C", "text": "created → beforeCreate → beforeMount → mounted → beforeUpdate → updated → beforeUnmount → unmounted" },
+      { "key": "D", "text": "beforeCreate → created → beforeMount → mounted → beforeUpdate → updated → beforeDestroy → destroyed" }
+    ],
+    "correct": "A",
+    "explanation": "これはVue3の標準的なライフサイクル順序です（setupはbeforeCreateの前に実行されますが、Dはライフサイクルフックの名前はVue2の命名規則です）。"
+  },
+  {
+    "title": "以下のコードで、mountedフックは何回実行される？",
+    "isMulti": false,
+    "code": "const MyComponent = {\n  setup() {\n    onMounted(() => {\n      console.log('mounted')\n    })\n  }\n}\n// テンプレートで：\n// <MyComponent v-if=\"show\" />\n// <MyComponent v-if=\"show\" />",
+    "options": [
+      { "key": "A", "text": "1回" },
+      { "key": "B", "text": "2回" },
+      { "key": "C", "text": "0回" },
+      { "key": "D", "text": "特定できない" }
+    ],
+    "correct": "B",
+    "explanation": "2つの別々のコンポーネントインスタンスがあり、それぞれがマウントされるため、mountedフックは2回実行されます。"
+  },
+  {
+    "title": "コンポーネント通信方法の説明として**間違っている**もの：",
+    "isMulti": false,
+    "options": [
+      { "key": "A", "text": "PropsはPropsを父→子で、Emitsは子→父で通信するために使用される" },
+      { "key": "B", "text": "Provide/Injectは複数レイヤーをまたぐ通信が可能だが、子コンポーネントはprovideされたデータを直接変更できない" },
+      { "key": "C", "text": "EventBusは任意の2つのコンポーネント間の通信に使用でき、メモリリークの原因になりやすい" },
+      { "key": "D", "text": "状態管理ライブラリ（Pinia）は大規模プロジェクトでのみ使用する必要がある" }
+    ],
+    "correct": "D",
+    "explanation": "状態管理ライブラリはプロジェクトサイズに関係なく、必要に応じて使用できます。小規模プロジェクトでも複雑なロジックがあれば使用するメリットがあります。"
+  },
+  {
+    "title": "provide/injectの使用方法として**正しい**もの：",
     "isMulti": true,
     "options": [
-      { "key": "A", "text": "v-if" },
-      { "key": "B", "text": "v-else" },
-      { "key": "C", "text": "v-show" },
-      { "key": "D", "text": "v-for" }
+      { "key": "A", "text": "親コンポーネントでprovide('key', value)を使用してデータを提供" },
+      { "key": "B", "text": "子コンポーネントでconst data = inject('key')でデータを取得" },
+      { "key": "C", "text": "inject('key', 'defaultValue')でデフォルト値を設定できる" },
+      { "key": "D", "text": "provide/injectは任意の深さのコンポーネント間で機能する" }
     ],
-    "correct": ["A", "B", "C"],
-    "explanation": "v-if、v-else、v-showはすべてVue3の条件分岐ディレクティブです。v-forはループ用です。"
+    "correct": ["A", "B", "C", "D"],
+    "explanation": "すべてがprovide/injectの正しい使用方法です。provide/injectはスロット情報の伝播に適した、非常に柔軟な通信メカニズムです。"
   },
   {
-    "title": "次のコードで、inputの値をリアクティブに更新するには？",
-    "isMulti": false,
-    "code": "<input v-model=\"message\" />\n<p>{{ message }}</p>",
-    "options": [
-      { "key": "A", "text": "const message = ref('')" },
-      { "key": "B", "text": "const message = reactive('')" },
-      { "key": "C", "text": "const message = computed(() => '')" },
-      { "key": "D", "text": "const message = ''" }
-    ],
-    "correct": "A",
-    "explanation": "v-modelを使用するには、ref()でリアクティブなデータを作成する必要があります。"
-  },
-  {
-    "title": "watch()は何を実行するために使用されますか？",
-    "isMulti": false,
-    "code": "watch(() => count.value, (newVal, oldVal) => {\n  console.log('count changed from', oldVal, 'to', newVal)\n})",
-    "options": [
-      { "key": "A", "text": "値が変わった時に副作用を実行する" },
-      { "key": "B", "text": "計算値を作成する" },
-      { "key": "C", "text": "テンプレートをレンダリングする" },
-      { "key": "D", "text": "非同期処理を実行する" }
-    ],
-    "correct": "A",
-    "explanation": "watch()は特定の値が変わった時に、コールバック関数を実行するために使用されます。"
-  },
-  {
-    "title": "Vue3のpropsの正しい使用法は？",
+    "title": "スロット（slots）についての説明として**正しい**もの：",
     "isMulti": true,
     "options": [
-      { "key": "A", "text": "defineProps()でpropsを定義する" },
-      { "key": "B", "text": "<script setup>内で使用できる" },
-      { "key": "C", "text": "プロパティはリアクティブ" },
-      { "key": "D", "text": "プロパティは親から変更できる" }
+      { "key": "A", "text": "デフォルトスロット、具名スロット、スコープスロットがある" },
+      { "key": "B", "text": "スコープスロットでは、子コンポーネント公開のデータを親コンポーネントスロット内で使用可能" },
+      { "key": "C", "text": "具名スロットと動的スロット名を同時に使用できる" },
+      { "key": "D", "text": "スロット内のデータアクセス範囲は、スロットの定義位置によって決まる" }
     ],
-    "correct": ["A", "B", "C"],
-    "explanation": "defineProps()でpropsを定義でき、<script setup>内で使用できます。propsはリアクティブですが、子コンポーネントから直接変更できません。"
+    "correct": ["A", "B", "C", "D"],
+    "explanation": "すべてがスロットの正しい特性です。スロット機能はVueコンポーネントの柔軟性と再利用性の重要な部分です。"
   },
   {
-    "title": "emit()は何に使用されますか？",
-    "isMulti": false,
-    "code": "const emit = defineEmits(['update'])\nemit('update', newValue)",
+    "title": "ProxyとObject.definePropertyの主な違い：",
+    "isMulti": true,
     "options": [
-      { "key": "A", "text": "親コンポーネントにイベントを送信する" },
-      { "key": "B", "text": "子コンポーネントからデータを変更する" },
-      { "key": "C", "text": "APIからデータを取得する" },
-      { "key": "D", "text": "コンポーネントをマウントする" }
+      { "key": "A", "text": "Object.definePropertyは新しいプロパティの追加を監視できないが、Proxyはできる" },
+      { "key": "B", "text": "Object.definePropertyは配列の長さの変更を監視できないが、Proxyはできる" },
+      { "key": "C", "text": "ProxyはObject.definePropertyより常にパフォーマンスが優れている" },
+      { "key": "D", "text": "ProxyはObject.definePropertyのあらゆる機能をカバーし、さらに多くの操作をインターセプトできる" }
+    ],
+    "correct": ["A", "B", "D"],
+    "explanation": "Cは誤りです。ProxyとObject.definePropertyのパフォーマンスは類似しており、場合によってはObject.definePropertyが優れることもあります。Vue3がProxyを選んだのはパフォーマンスではなく、より包括的なインターセプト機能のためです。"
+  },
+  {
+    "title": "Vue3のreactiveが追跡できる以下の操作：",
+    "isMulti": false,
+    "code": "const state = reactive({ \n  count: 0,\n  arr: [1, 2, 3]\n})\nstate.count++ // ?\nstate.newProp = 100 // ?\nstate.arr[0] = 10 // ?\nstate.arr.length = 2 // ?",
+    "options": [
+      { "key": "A", "text": "すべて追跡できる" },
+      { "key": "B", "text": "state.newPropのみ追跡できない" },
+      { "key": "C", "text": "state.arr[0]のみ追跡できない" },
+      { "key": "D", "text": "state.arr.lengthのみ追跡できない" }
     ],
     "correct": "A",
-    "explanation": "emit()は子コンポーネントから親コンポーネントにカスタムイベントを送信するために使用されます。"
+    "explanation": "Vue3のProxyはこれらすべての操作を追跡します。Vue2ではstate.newPropとstate.arr[0]は追跡できません。"
+  },
+  {
+    "title": "パフォーマンス最適化として**正しい**もの：",
+    "isMulti": true,
+    "options": [
+      { "key": "A", "text": "頻繁に切り替えるコンポーネントはv-ifではなくv-showを使用" },
+      { "key": "B", "text": "computedのキャッシング機能により、重複計算を回避できる" },
+      { "key": "C", "text": "仮想スクロールは超大型リスト（数千行）のレンダリング問題を解決" },
+      { "key": "D", "text": "テンプレートでメソッドを直接呼び出すのはcomputedを使用するより効率的" }
+    ],
+    "correct": ["A", "B", "C"],
+    "explanation": "Dは誤りです。テンプレートでメソッドを呼び出すたびに実行されます。computedはキャッシング機能があり、より効率的です。"
+  },
+  {
+    "title": "keep-aliveについての説明として**間違っている**もの：",
+    "isMulti": false,
+    "options": [
+      { "key": "A", "text": "keep-aliveはコンポーネントをキャッシュし、再マウントを回避してパフォーマンスを向上させる" },
+      { "key": "B", "text": "keep-aliveはinclude、exclude、maxプロパティで制御できる" },
+      { "key": "C", "text": "keep-aliveでキャッシュされたコンポーネントはunmountedフックが実行されない" },
+      { "key": "D", "text": "keep-aliveのコンポーネントはactivatedとdeactivatedフックを取得する" }
+    ],
+    "correct": "C",
+    "explanation": "keep-aliveでキャッシュされたコンポーネントが破棄される場合はunmountedが実行されます。keep-aliveはコンポーネント状態を保持しますが、破棄時はクリーンアップが必要です。"
+  },
+  {
+    "title": "カスタム指令について**正しい**もの：",
+    "isMulti": true,
+    "options": [
+      { "key": "A", "text": "カスタム指令はcreated、mounted、updatedなどのライフサイクルフックを持つ" },
+      { "key": "B", "text": "カスタム指令は修飾子をサポートできる（例：v-myDir.foo）" },
+      { "key": "C", "text": "グローバルに登録された指令はアプリケーション全体で使用可能" },
+      { "key": "D", "text": "カスタム指令にパラメータを渡すことはできない" }
+    ],
+    "correct": ["A", "B", "C"],
+    "explanation": "Dは誤りです。カスタム指令はパラメータを受け取ることができます。例：v-myDir:value、またはv-myDir=\"value\"。"
+  },
+  {
+    "title": "以下のカスタム指令の書き方で**正しい**もの：",
+    "isMulti": false,
+    "code": "// A. 短縮形\nconst myDir = (el, binding) => {\n  el.style.color = binding.value\n}\n// B. 完全形\nconst myDir = {\n  mounted(el, binding) { el.style.color = binding.value },\n  updated(el, binding) { el.style.color = binding.value }\n}\n// C. 登録\napp.directive('myDir', myDir)\n// D. 使用\n// <div v-my-dir=\"'red'\">Text</div>",
+    "options": [
+      { "key": "A", "text": "すべて正しい" },
+      { "key": "B", "text": "短縮形は修飾子をサポートしていない" },
+      { "key": "C", "text": "登録方式が間違っている" },
+      { "key": "D", "text": "使用方式が間違っている" }
+    ],
+    "correct": "B",
+    "explanation": "短縮形はmountedとupdatedのみを結合しているため、修飾子（binding.modifiers）を独立して処理することはできません。修飾子が必要な場合は完全形を使用すべきです。"
+  },
+  {
+    "title": "以下のコードの動作は？",
+    "isMulti": false,
+    "code": "const state = reactive({\n  count: ref(0)\n})\nconsole.log(state.count) // ?\nconsole.log(state.count.value) // ?\nstate.count.value++\nconsole.log(state.count.value) // ?",
+    "options": [
+      { "key": "A", "text": "0, 0, 1" },
+      { "key": "B", "text": "Ref object, 0, 1" },
+      { "key": "C", "text": "Ref object, 0, 0" },
+      { "key": "D", "text": "0, エラー, エラー" }
+    ],
+    "correct": "B",
+    "explanation": "reactiveは最上レベルのrefを自動的にアンラップするため、state.countは0となります。しかしstate.count.valueは直接ref値にアクセスするため、0です。state.count.value++で1に増加します。"
+  },
+  {
+    "title": "以下のコードで何が発生する？",
+    "isMulti": false,
+    "code": "const count = ref(0)\nconst doubleCount = computed(() => {\n  console.log('computed')\n  return count.value * 2\n})\nwatch(doubleCount, (newVal) => {\n  console.log('watch:', newVal)\n})\ncount.value++",
+    "options": [
+      { "key": "A", "text": "computedが1回実行、watchが1回実行" },
+      { "key": "B", "text": "computedが2回実行、watchが2回実行" },
+      { "key": "C", "text": "computedが1回実行、watchが0回実行" },
+      { "key": "D", "text": "テンプレートがないため何も出力されない" }
+    ],
+    "correct": "A",
+    "explanation": "computedはcount.value変更時に1回実行され、watchはcomputedの値変更を検出して1回実行されます。テンプレートがなくてもログは出力されます。"
+  },
+  {
+    "title": "リアクティブ計数器の最良な実装は？",
+    "isMulti": false,
+    "options": [
+      { "key": "A", "text": "const counter = reactive({ count: 0 })" },
+      { "key": "B", "text": "const count = ref(0)" },
+      { "key": "C", "text": "const count = computed(() => 0)" },
+      { "key": "D", "text": "const count = ref(0)\nwatch(count, () => {})" }
+    ],
+    "correct": "B",
+    "explanation": "refはより柔軟で、任意の値をラップでき、テンプレート内で自動アンラップされます。プリミティブ値の場合、refはreactiveより適切です。"
+  },
+  {
+    "title": "以下のうち、メモリリークを引き起こす可能性があるもの：",
+    "isMulti": true,
+    "options": [
+      { "key": "A", "text": "const unwatch = watch(source, () => {})\n// コンポーネント破棄時にunwatch()を呼び出さない" },
+      { "key": "B", "text": "const timer = setInterval(() => {}, 1000)\n// コンポーネント破棄時にclearInterval()を呼び出さない" },
+      { "key": "C", "text": "onBeforeUnmount(() => {\n  const unwatch = watch(source, () => {})\n})" },
+      { "key": "D", "text": "provide('data', reactive({ ... }))" }
+    ],
+    "correct": ["A", "B"],
+    "explanation": "AとBはメモリリークを引き起こします。CはonBeforeUnmountでwatchを作成するのは不適切ですが、onMountedで作成すべきです。Dは提供されるデータのライフサイクルに従うため、メモリリークにはなりません。"
+  },
+  {
+    "title": "Vueコンポーネント設計の**正しい**原則：",
+    "isMulti": true,
+    "options": [
+      { "key": "A", "text": "単一責任の原則に従い、コンポーネントは1つの主な目的を持つ" },
+      { "key": "B", "text": "Propsを通じてデータを受け取り、イベントを通じてデータを出力" },
+      { "key": "C", "text": "複雑なロジックは別のモジュールに抽出すべき" },
+      { "key": "D", "text": "すべてのデータは必ずリアクティブにする必要がある" }
+    ],
+    "correct": ["A", "B", "C"],
+    "explanation": "Dは誤りです。すべてのデータがリアクティブである必要はありません。必要な場合のみリアクティブにすることで、パフォーマンスが向上します。"
   }
 ]
