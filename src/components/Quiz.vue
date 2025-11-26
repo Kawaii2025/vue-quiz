@@ -1,125 +1,170 @@
 <template>
-  <div class="container">
-    <h1>Javaコア技術 60問インタラクティブ試験（2025年版）</h1>
-    <p class="subtitle">点击「答案を表示」查看答案和解説</p>
+  <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4">
+    <div class="max-w-4xl mx-auto">
+      <h1 class="text-4xl font-bold text-center text-blue-600 mb-2">Javaコア技術 60問インタラクティブ試験（2025年版）</h1>
+      <p class="text-center text-gray-600 mb-8">クリック「答案を表示」→ 正誤判定＋正解＋詳細解説が出現</p>
 
-    <div class="filter-bar">
-      <button class="filter-btn" :class="{ active: filter === 'all' }" @click="setFilter('all')">所有题目</button>
-      <button class="filter-btn" :class="{ active: filter === 'wrong' }" @click="setFilter('wrong')">做错的题</button>
-      <button class="filter-btn" :class="{ active: filter === 'correct' }" @click="setFilter('correct')">做对的题</button>
-    </div>
-
-    <div v-if="questions.length === 0">题目加载中...</div>
-
-    <div v-for="(q, index) in filteredQuestions" :key="index" class="question">
-      <div class="q-title">
-        <span v-if="q.isMulti" class="multi">【多选】</span>
-        {{ index + 1 }}. {{ q.title }}
+      <div class="flex justify-center gap-3 mb-8 flex-wrap">
+        <button 
+          :class="filter === 'all' ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-blue-600 border-2 border-blue-600 hover:bg-blue-50'"
+          class="px-6 py-2 rounded-lg font-medium transition-all duration-300"
+          @click="filter = 'all'"
+        >
+          すべて表示
+        </button>
+        <button 
+          :class="filter === 'wrong' ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-blue-600 border-2 border-blue-600 hover:bg-blue-50'"
+          class="px-6 py-2 rounded-lg font-medium transition-all duration-300"
+          @click="filter = 'wrong'"
+        >
+          間違えた問題のみ
+        </button>
+        <button 
+          :class="filter === 'correct' ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-blue-600 border-2 border-blue-600 hover:bg-blue-50'"
+          class="px-6 py-2 rounded-lg font-medium transition-all duration-300"
+          @click="filter = 'correct'"
+        >
+          正解した問題のみ
+        </button>
       </div>
 
-      <div class="code" v-if="q.code">{{ q.code }}</div>
-
-      <div class="options">
-        <label v-for="opt in q.options" :key="opt.key">
-          <input
-            :type="q.isMulti ? 'checkbox' : 'radio'"
-            :name="'q' + index"
-            :value="opt.key"
-            v-model="userAnswers[index]"
-          />
-          {{ opt.key }}. {{ opt.text }}
-        </label>
+      <div v-if="questions.length === 0" class="text-center py-12 text-gray-500 text-lg">
+        読み込み中...
       </div>
 
-      <button class="show-btn" @click="checkAnswer(index)">答案を表示</button>
-
-      <div class="answer" v-if="answerVisible[index]">
-        <div v-if="isCorrect(index)" class="correct">
-          正确！<br />
-          <strong>答案：{{ correctAnswerString(index) }}</strong>
+      <div v-for="(q, index) in filteredQuestions" :key="index" class="bg-white rounded-xl shadow-md p-6 mb-6 hover:shadow-lg transition-shadow duration-300">
+        <div class="text-lg font-bold text-blue-600 mb-4">
+          <span v-if="q.isMulti" class="inline-block bg-pink-100 text-pink-700 px-3 py-1 rounded-full text-sm font-semibold mr-2">【複数選択】</span>
+          {{ index + 1 }}. {{ q.title }}
         </div>
 
-        <div v-else class="wrong">
-          错误<br />
-          <strong>答案：{{ correctAnswerString(index) }}</strong>
+        <div v-if="q.code" class="bg-gray-900 text-gray-100 p-4 rounded-lg font-mono text-sm mb-4 overflow-x-auto whitespace-pre-wrap break-words">
+          {{ q.code }}
         </div>
 
-        <div class="explanation">{{ q.explanation }}</div>
+        <div class="space-y-3 mb-6">
+          <label v-for="opt in q.options" :key="opt.key" class="flex items-center p-3 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors duration-200">
+            <input
+              :type="q.isMulti ? 'checkbox' : 'radio'"
+              :name="'q' + (index + 1)"
+              :value="opt.key"
+              class="w-5 h-5 text-blue-600 rounded cursor-pointer"
+              v-model="userAnswers[index]"
+            />
+            <span class="ml-3 text-gray-700">{{ opt.key }}. {{ opt.text }}</span>
+          </label>
+        </div>
+
+        <button 
+          class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 mb-4"
+          @click="handleCheckAnswer(index, q.isMulti)"
+        >
+          答案を表示
+        </button>
+
+        <div v-if="answerVisible[index]" class="animate-fadeIn">
+          <!-- Correct answer -->
+          <div v-if="status[index] === 'correct'" class="bg-green-50 border-l-4 border-green-500 p-4 rounded mb-3">
+            <p class="text-green-700 font-semibold">✓ 全正解！</p>
+            <p class="text-green-700 font-bold mt-2">正解：{{ getCorrectAnswerString(q) }}</p>
+          </div>
+
+          <!-- Wrong answer -->
+          <div v-else class="bg-red-50 border-l-4 border-red-500 p-4 rounded mb-3">
+            <p class="text-red-700 font-semibold">✗ 不正解</p>
+            <p class="text-red-700 font-bold mt-2">正解：{{ getCorrectAnswerString(q) }}</p>
+            <div v-if="userSelectedStr[index]" class="text-red-700 text-sm mt-2">
+              あなたの選択：{{ userSelectedStr[index] }}
+            </div>
+          </div>
+
+          <!-- Explanation -->
+          <div class="bg-gray-100 p-4 rounded text-gray-800 text-sm leading-relaxed">
+            <strong>解説：</strong> {{ q.explanation }}
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
-<script>
-export default {
-  data() {
-    return {
-      questions: [],
-      filter: "all",
-      userAnswers: {},
-      answerVisible: {},
-      status: {}
-    };
-  },
-  computed: {
-    filteredQuestions() {
-      return this.questions.filter((q, i) => {
-        const s = this.status[i];
-        if (this.filter === "all") return true;
-        if (this.filter === "correct") return s === "correct";
-        if (this.filter === "wrong") return s === "wrong";
-        return true;
-      });
-    }
-  },
-  methods: {
-    async loadQuestions() {
-      const res = await fetch("/questions.json");
-      this.questions = await res.json();
-    },
-    setFilter(f) {
-      this.filter = f;
-    },
-    correctAnswerString(i) {
-      const c = this.questions[i].correct;
-      return Array.isArray(c) ? c.join(", ") : c;
-    },
-    isCorrect(i) {
-      return this.status[i] === "correct";
-    },
-    checkAnswer(i) {
-      const q = this.questions[i];
-      const user = this.userAnswers[i];
-      let correct = false;
+<script setup>
+import { ref, computed, onMounted } from 'vue'
 
-      if (q.isMulti) {
-        const sel = Array.isArray(user) ? [...user].sort() : [];
-        const ans = [...q.correct].sort();
-        correct = JSON.stringify(sel) === JSON.stringify(ans);
-      } else {
-        correct = user === q.correct;
-      }
+const questions = ref([])
+const filter = ref('all')
+const userAnswers = ref({})
+const answerVisible = ref({})
+const userSelectedStr = ref({})
+const status = ref({})
 
-      this.status[i] = correct ? "correct" : "wrong";
-      this.$set(this.answerVisible, i, true);
-    }
-  },
-  mounted() {
-    this.loadQuestions();
+const filteredQuestions = computed(() => {
+  return questions.value.filter((q, i) => {
+    const s = status.value[i]
+    if (filter.value === 'all') return true
+    if (filter.value === 'correct') return s === 'correct'
+    if (filter.value === 'wrong') return s === 'wrong'
+    return true
+  })
+})
+
+const loadQuestions = async () => {
+  try {
+    const res = await fetch('/questions.json')
+    questions.value = await res.json()
+  } catch (err) {
+    console.error('Failed to load questions:', err)
   }
-};
+}
+
+const getCorrectAnswerString = (q) => {
+  const c = q.correct
+  return Array.isArray(c) ? c.join(', ') : c
+}
+
+const handleCheckAnswer = (index, isMulti) => {
+  const q = questions.value[index]
+  const user = userAnswers.value[index]
+  let isCorrect = false
+
+  if (isMulti) {
+    const correctArray = Array.isArray(q.correct) ? q.correct : (typeof q.correct === 'string' ? q.correct.split('') : [q.correct])
+    const selected = Array.isArray(user) ? [...user].sort() : []
+    const correct = [...correctArray].sort()
+    isCorrect = JSON.stringify(selected) === JSON.stringify(correct)
+    userSelectedStr.value[index] = selected.length > 0 ? selected.join(', ') : 'なし'
+  } else {
+    if (!user) {
+      userSelectedStr.value[index] = 'なし'
+      isCorrect = false
+    } else {
+      isCorrect = user === q.correct
+      userSelectedStr.value[index] = user
+    }
+  }
+
+  status.value[index] = isCorrect ? 'correct' : 'wrong'
+  answerVisible.value[index] = true
+}
+
+onMounted(() => {
+  loadQuestions()
+})
 </script>
 
 <style scoped>
-.container { max-width: 900px; margin: auto; padding: 20px; }
-.question { background: white; padding: 20px; margin-top: 20px; border-radius: 10px; }
-.q-title { font-weight: bold; font-size: 18px; margin-bottom: 10px; color: #1a73e8; }
-.code { background: #eee; padding: 10px; border-radius: 6px; white-space: pre-wrap; }
-.correct { background: #e8f5e9; padding: 10px; border-left: 5px solid #4caf50; }
-.wrong { background: #ffebee; padding: 10px; border-left: 5px solid #f44336; }
-.multi { color: #d81b60; font-weight: bold; }
-.filter-bar { text-align: center; margin: 20px 0; }
-.filter-btn { padding: 10px 20px; border-radius: 6px; border: 2px solid #1a73e8; margin: 0 5px; cursor: pointer; }
-.filter-btn.active { background: #1a73e8; color: white; }
-.show-btn { background: #1a73e8; color: white; padding: 10px 20px; border-radius: 6px; cursor: pointer; }
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.5s ease-out;
+}
 </style>

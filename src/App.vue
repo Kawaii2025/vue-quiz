@@ -1,17 +1,7 @@
 <template>
-  <div class="app">
-    <Quiz />
-  </div>
+  <Quiz />
 </template>
 
-<script>
-import Quiz from "./components/Quiz.vue";
-
-export default {
-  components: { Quiz }
-};
+<script setup>
+import Quiz from "./components/Quiz.vue"
 </script>
-
-<style>
-body { margin: 0; background: #f7f9fc; }
-</style>
