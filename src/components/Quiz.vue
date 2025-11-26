@@ -1,7 +1,7 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4">
+  <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4" v-if="questions.length > 0">
     <div class="max-w-4xl mx-auto">
-      <h1 class="text-4xl font-bold text-center text-blue-600 mb-2">Javaコア技術 60問インタラクティブ試験（2025年版）</h1>
+      <h1 class="text-4xl font-bold text-center text-blue-600 mb-2">Vue3 コア技術 {{ questions.length }}問インタラクティブ試験（2025年版）</h1>
       <p class="text-center text-gray-600 mb-8">クリック「答案を表示」→ 正誤判定＋正解＋詳細解説が出現</p>
 
       <div class="flex justify-center gap-3 mb-8 flex-wrap">
@@ -26,10 +26,6 @@
         >
           正解した問題のみ
         </button>
-      </div>
-
-      <div v-if="questions.length === 0" class="text-center py-12 text-gray-500 text-lg">
-        読み込み中...
       </div>
 
       <div v-for="(q, index) in filteredQuestions" :key="index" class="bg-white rounded-xl shadow-md p-6 mb-6 hover:shadow-lg transition-shadow duration-300">
@@ -63,13 +59,11 @@
         </button>
 
         <div v-if="answerVisible[index]" class="animate-fadeIn">
-          <!-- Correct answer -->
           <div v-if="status[index] === 'correct'" class="bg-green-50 border-l-4 border-green-500 p-4 rounded mb-3">
             <p class="text-green-700 font-semibold">✓ 全正解！</p>
             <p class="text-green-700 font-bold mt-2">正解：{{ getCorrectAnswerString(q) }}</p>
           </div>
 
-          <!-- Wrong answer -->
           <div v-else class="bg-red-50 border-l-4 border-red-500 p-4 rounded mb-3">
             <p class="text-red-700 font-semibold">✗ 不正解</p>
             <p class="text-red-700 font-bold mt-2">正解：{{ getCorrectAnswerString(q) }}</p>
@@ -78,12 +72,17 @@
             </div>
           </div>
 
-          <!-- Explanation -->
           <div class="bg-gray-100 p-4 rounded text-gray-800 text-sm leading-relaxed">
             <strong>解説：</strong> {{ q.explanation }}
           </div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4 flex items-center justify-center" v-else>
+    <div class="text-center">
+      <p class="text-2xl text-gray-600">読み込み中...</p>
     </div>
   </div>
 </template>
@@ -98,6 +97,15 @@ const answerVisible = ref({})
 const userSelectedStr = ref({})
 const status = ref({})
 
+const loadQuestions = async () => {
+  try {
+    const res = await fetch('/questions.json')
+    questions.value = await res.json()
+  } catch (err) {
+    console.error('Failed to load questions:', err)
+  }
+}
+
 const filteredQuestions = computed(() => {
   return questions.value.filter((q, i) => {
     const s = status.value[i]
@@ -107,15 +115,6 @@ const filteredQuestions = computed(() => {
     return true
   })
 })
-
-const loadQuestions = async () => {
-  try {
-    const res = await fetch('/questions.json')
-    questions.value = await res.json()
-  } catch (err) {
-    console.error('Failed to load questions:', err)
-  }
-}
 
 const getCorrectAnswerString = (q) => {
   const c = q.correct
@@ -128,8 +127,11 @@ const handleCheckAnswer = (index, isMulti) => {
   let isCorrect = false
 
   if (isMulti) {
+    // Auto-select all correct answers
+    userAnswers.value[index] = q.correct
+    
     const correctArray = Array.isArray(q.correct) ? q.correct : (typeof q.correct === 'string' ? q.correct.split('') : [q.correct])
-    const selected = Array.isArray(user) ? [...user].sort() : []
+    const selected = [...correctArray].sort()
     const correct = [...correctArray].sort()
     isCorrect = JSON.stringify(selected) === JSON.stringify(correct)
     userSelectedStr.value[index] = selected.length > 0 ? selected.join(', ') : 'なし'

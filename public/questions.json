@@ -1,12 +1,128 @@
 [
   {
-    "title": "Sample question",
+    "title": "Vue3でコンポーネントを定義する最新の方法は？",
     "isMulti": false,
+    "code": "<script setup>\nimport { ref } from 'vue'\nconst count = ref(0)\n</script>",
     "options": [
-      { "key": "A", "text": "Option A" },
-      { "key": "B", "text": "Option B" }
+      { "key": "A", "text": "Options API" },
+      { "key": "B", "text": "Composition API with <script setup>" },
+      { "key": "C", "text": "Class Components" },
+      { "key": "D", "text": "Vue 2 API" }
+    ],
+    "correct": "B",
+    "explanation": "<script setup>はVue 3の推奨される方法で、Composition APIをより簡潔に書くことができます。"
+  },
+  {
+    "title": "Vue3のリアクティビティを実現するAPIは？",
+    "isMulti": true,
+    "options": [
+      { "key": "A", "text": "ref()" },
+      { "key": "B", "text": "reactive()" },
+      { "key": "C", "text": "computed()" },
+      { "key": "D", "text": "data()" }
+    ],
+    "correct": ["A", "B", "C"],
+    "explanation": "ref()、reactive()、computed()はすべてVue 3のリアクティビティAPIです。data()はOptions APIのものです。"
+  },
+  {
+    "title": "次のコードの出力は何ですか？",
+    "isMulti": false,
+    "code": "const count = ref(5)\ncount.value++\nconsole.log(count.value)",
+    "options": [
+      { "key": "A", "text": "5" },
+      { "key": "B", "text": "6" },
+      { "key": "C", "text": "undefined" },
+      { "key": "D", "text": "エラー" }
+    ],
+    "correct": "B",
+    "explanation": "ref()で作成した値にアクセスするには.valueを使用します。count.value++で6になります。"
+  },
+  {
+    "title": "Vue3でライフサイクルフックは？",
+    "isMulti": true,
+    "options": [
+      { "key": "A", "text": "onMounted()" },
+      { "key": "B", "text": "onUnmounted()" },
+      { "key": "C", "text": "onUpdated()" },
+      { "key": "D", "text": "beforeCreate()" }
+    ],
+    "correct": ["A", "B", "C"],
+    "explanation": "onMounted()、onUnmounted()、onUpdated()はVue 3のライフサイクルフックです。beforeCreate()はVue 2のものです。"
+  },
+  {
+    "title": "computed()は何に使用されますか？",
+    "isMulti": false,
+    "code": "const fullName = computed(() => {\n  return firstName.value + ' ' + lastName.value\n})",
+    "options": [
+      { "key": "A", "text": "非同期処理の実行" },
+      { "key": "B", "text": "依存するデータから計算される値" },
+      { "key": "C", "text": "イベントハンドリング" },
+      { "key": "D", "text": "APIデータの取得" }
+    ],
+    "correct": "B",
+    "explanation": "computed()は依存するデータから計算される値を作成します。自動的にキャッシュされ、依存値が変わるとリアクティブに更新されます。"
+  },
+  {
+    "title": "Vue3でテンプレートの条件分岐は？",
+    "isMulti": true,
+    "options": [
+      { "key": "A", "text": "v-if" },
+      { "key": "B", "text": "v-else" },
+      { "key": "C", "text": "v-show" },
+      { "key": "D", "text": "v-for" }
+    ],
+    "correct": ["A", "B", "C"],
+    "explanation": "v-if、v-else、v-showはすべてVue3の条件分岐ディレクティブです。v-forはループ用です。"
+  },
+  {
+    "title": "次のコードで、inputの値をリアクティブに更新するには？",
+    "isMulti": false,
+    "code": "<input v-model=\"message\" />\n<p>{{ message }}</p>",
+    "options": [
+      { "key": "A", "text": "const message = ref('')" },
+      { "key": "B", "text": "const message = reactive('')" },
+      { "key": "C", "text": "const message = computed(() => '')" },
+      { "key": "D", "text": "const message = ''" }
     ],
     "correct": "A",
-    "explanation": "This is a sample explanation."
+    "explanation": "v-modelを使用するには、ref()でリアクティブなデータを作成する必要があります。"
+  },
+  {
+    "title": "watch()は何を実行するために使用されますか？",
+    "isMulti": false,
+    "code": "watch(() => count.value, (newVal, oldVal) => {\n  console.log('count changed from', oldVal, 'to', newVal)\n})",
+    "options": [
+      { "key": "A", "text": "値が変わった時に副作用を実行する" },
+      { "key": "B", "text": "計算値を作成する" },
+      { "key": "C", "text": "テンプレートをレンダリングする" },
+      { "key": "D", "text": "非同期処理を実行する" }
+    ],
+    "correct": "A",
+    "explanation": "watch()は特定の値が変わった時に、コールバック関数を実行するために使用されます。"
+  },
+  {
+    "title": "Vue3のpropsの正しい使用法は？",
+    "isMulti": true,
+    "options": [
+      { "key": "A", "text": "defineProps()でpropsを定義する" },
+      { "key": "B", "text": "<script setup>内で使用できる" },
+      { "key": "C", "text": "プロパティはリアクティブ" },
+      { "key": "D", "text": "プロパティは親から変更できる" }
+    ],
+    "correct": ["A", "B", "C"],
+    "explanation": "defineProps()でpropsを定義でき、<script setup>内で使用できます。propsはリアクティブですが、子コンポーネントから直接変更できません。"
+  },
+  {
+    "title": "emit()は何に使用されますか？",
+    "isMulti": false,
+    "code": "const emit = defineEmits(['update'])\nemit('update', newValue)",
+    "options": [
+      { "key": "A", "text": "親コンポーネントにイベントを送信する" },
+      { "key": "B", "text": "子コンポーネントからデータを変更する" },
+      { "key": "C", "text": "APIからデータを取得する" },
+      { "key": "D", "text": "コンポーネントをマウントする" }
+    ],
+    "correct": "A",
+    "explanation": "emit()は子コンポーネントから親コンポーネントにカスタムイベントを送信するために使用されます。"
   }
 ]
