@@ -2,7 +2,7 @@
   <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4" v-if="questions.length > 0">
     <div class="max-w-4xl mx-auto">
       <h1 class="text-4xl font-bold text-center text-blue-600 mb-2">Vue3 コア技術 {{ questions.length }}問インタラクティブ試験（2025年版）</h1>
-      <p class="text-center text-gray-600 mb-8">クリック「答案を表示」→ 正誤判定＋正解＋詳細解説が出現</p>
+      <p class="text-center text-gray-600 mb-8">単選：クリック即出答案 | 複数選択：「答案を表示」ボタンをクリック</p>
 
       <div class="flex justify-center gap-3 mb-8 flex-wrap">
         <button 
@@ -31,7 +31,8 @@
       <div v-for="(q, index) in filteredQuestions" :key="index" class="bg-white rounded-xl shadow-md p-6 mb-6 hover:shadow-lg transition-shadow duration-300">
         <div class="text-lg font-bold text-blue-600 mb-4">
           <span v-if="q.isMulti" class="inline-block bg-pink-100 text-pink-700 px-3 py-1 rounded-full text-sm font-semibold mr-2">【複数選択】</span>
-          {{ index + 1 }}. {{ q.title }}
+          <span v-else class="inline-block bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-semibold mr-2">【単選】</span>
+          {{ getOriginalIndex(index) + 1 }}. {{ q.title }}
         </div>
 
         <div v-if="q.code" class="bg-gray-900 text-gray-100 p-4 rounded-lg font-mono text-sm mb-4 overflow-x-auto whitespace-pre-wrap break-words">
@@ -39,20 +40,22 @@
         </div>
 
         <div class="space-y-3 mb-6">
-          <label v-for="opt in q.options" :key="opt.key" class="flex items-center p-3 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors duration-200">
+          <label v-for="opt in q.options" :key="opt.key" class="flex items-center p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200" :class="{ 'cursor-default hover:bg-white': answerVisible[index] }">
             <input
               :type="q.isMulti ? 'checkbox' : 'radio'"
               :name="'q' + index"
               :value="opt.key"
-              class="w-5 h-5 text-blue-600 rounded cursor-pointer"
+              class="w-5 h-5 text-blue-600 rounded cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               :checked="isChecked(index, opt.key, q.isMulti)"
-              @change="handleInputChange(index, opt.key, q.isMulti, $event)"
+              :disabled="answerVisible[index]"
+              @change="handleInputChange(index, opt.key, q.isMulti, $event, q)"
             />
             <span class="ml-3 text-gray-700">{{ opt.key }}. {{ opt.text }}</span>
           </label>
         </div>
 
         <button 
+          v-if="q.isMulti && !answerVisible[index]"
           class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 mb-4"
           @click="handleCheckAnswer(index, q.isMulti)"
         >
@@ -61,7 +64,7 @@
 
         <div v-if="answerVisible[index]" class="animate-fadeIn">
           <div v-if="status[index] === 'correct'" class="bg-green-50 border-l-4 border-green-500 p-4 rounded mb-3">
-            <p class="text-green-700 font-semibold">✓ 全正解！</p>
+            <p class="text-green-700 font-semibold">✓ {{ q.isMulti ? '全正解！' : '正解！' }}</p>
             <p class="text-green-700 font-bold mt-2">正解：{{ getCorrectAnswerString(q) }}</p>
           </div>
 
@@ -93,7 +96,7 @@ import { ref, computed, onMounted } from 'vue'
 
 const questions = ref([])
 const filter = ref('all')
-const userAnswers = ref({}) // Maps question index to answer (string for radio, array for checkbox)
+const userAnswers = ref({})
 const answerVisible = ref({})
 const userSelectedStr = ref({})
 const status = ref({})
@@ -102,7 +105,6 @@ const loadQuestions = async () => {
   try {
     const res = await fetch('/questions.json')
     questions.value = await res.json()
-    // Initialize userAnswers with proper structure
     questions.value.forEach((q, idx) => {
       userAnswers.value[idx] = q.isMulti ? [] : ''
     })
@@ -121,12 +123,24 @@ const filteredQuestions = computed(() => {
   })
 })
 
+const getOriginalIndex = (filteredIndex) => {
+  let count = 0
+  for (let i = 0; i < questions.value.length; i++) {
+    if (filter.value === 'all' || 
+        (filter.value === 'correct' && status.value[i] === 'correct') ||
+        (filter.value === 'wrong' && status.value[i] === 'wrong')) {
+      if (count === filteredIndex) return i
+      count++
+    }
+  }
+  return filteredIndex
+}
+
 const getCorrectAnswerString = (q) => {
   const c = q.correct
   return Array.isArray(c) ? c.join(', ') : c
 }
 
-// Check if an option is selected
 const isChecked = (questionIndex, optionKey, isMulti) => {
   const answer = userAnswers.value[questionIndex]
   if (isMulti) {
@@ -136,10 +150,8 @@ const isChecked = (questionIndex, optionKey, isMulti) => {
   }
 }
 
-// Handle input change
-const handleInputChange = (index, optionKey, isMulti, event) => {
+const handleInputChange = (index, optionKey, isMulti, event, q) => {
   if (isMulti) {
-    // Checkbox: toggle value in array
     const currentAnswers = userAnswers.value[index] || []
     if (event.target.checked) {
       if (!currentAnswers.includes(optionKey)) {
@@ -151,10 +163,11 @@ const handleInputChange = (index, optionKey, isMulti, event) => {
         currentAnswers.splice(idx, 1)
       }
     }
-    userAnswers.value[index] = [...currentAnswers] // Trigger reactivity
+    userAnswers.value[index] = [...currentAnswers]
   } else {
-    // Radio: set single value
+    // 単選：クリック即出答案
     userAnswers.value[index] = optionKey
+    handleCheckAnswer(index, isMulti)
   }
 }
 
@@ -164,7 +177,6 @@ const handleCheckAnswer = (index, isMulti) => {
   let isCorrect = false
 
   if (isMulti) {
-    // Multi-select: compare arrays
     const correctArray = Array.isArray(q.correct) ? q.correct : [q.correct]
     const userArray = Array.isArray(user) ? user : []
     
@@ -174,7 +186,6 @@ const handleCheckAnswer = (index, isMulti) => {
     isCorrect = JSON.stringify(correctSorted) === JSON.stringify(userSorted)
     userSelectedStr.value[index] = userArray.length > 0 ? userArray.join(', ') : 'なし'
   } else {
-    // Single select: compare strings
     if (!user) {
       userSelectedStr.value[index] = 'なし'
       isCorrect = false
