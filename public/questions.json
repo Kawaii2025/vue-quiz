@@ -1,0 +1,12 @@
+[
+  {
+    "title": "Sample question",
+    "isMulti": false,
+    "options": [
+      { "key": "A", "text": "Option A" },
+      { "key": "B", "text": "Option B" }
+    ],
+    "correct": "A",
+    "explanation": "This is a sample explanation."
+  }
+]
