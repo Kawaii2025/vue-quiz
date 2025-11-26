@@ -42,10 +42,11 @@
           <label v-for="opt in q.options" :key="opt.key" class="flex items-center p-3 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors duration-200">
             <input
               :type="q.isMulti ? 'checkbox' : 'radio'"
-              :name="'q' + (index + 1)"
+              :name="'q' + index"
               :value="opt.key"
               class="w-5 h-5 text-blue-600 rounded cursor-pointer"
-              v-model="userAnswers[index]"
+              :checked="isChecked(index, opt.key, q.isMulti)"
+              @change="handleInputChange(index, opt.key, q.isMulti, $event)"
             />
             <span class="ml-3 text-gray-700">{{ opt.key }}. {{ opt.text }}</span>
           </label>
@@ -92,7 +93,7 @@ import { ref, computed, onMounted } from 'vue'
 
 const questions = ref([])
 const filter = ref('all')
-const userAnswers = ref({})
+const userAnswers = ref({}) // Maps question index to answer (string for radio, array for checkbox)
 const answerVisible = ref({})
 const userSelectedStr = ref({})
 const status = ref({})
@@ -101,6 +102,10 @@ const loadQuestions = async () => {
   try {
     const res = await fetch('/questions.json')
     questions.value = await res.json()
+    // Initialize userAnswers with proper structure
+    questions.value.forEach((q, idx) => {
+      userAnswers.value[idx] = q.isMulti ? [] : ''
+    })
   } catch (err) {
     console.error('Failed to load questions:', err)
   }
@@ -121,21 +126,55 @@ const getCorrectAnswerString = (q) => {
   return Array.isArray(c) ? c.join(', ') : c
 }
 
+// Check if an option is selected
+const isChecked = (questionIndex, optionKey, isMulti) => {
+  const answer = userAnswers.value[questionIndex]
+  if (isMulti) {
+    return Array.isArray(answer) && answer.includes(optionKey)
+  } else {
+    return answer === optionKey
+  }
+}
+
+// Handle input change
+const handleInputChange = (index, optionKey, isMulti, event) => {
+  if (isMulti) {
+    // Checkbox: toggle value in array
+    const currentAnswers = userAnswers.value[index] || []
+    if (event.target.checked) {
+      if (!currentAnswers.includes(optionKey)) {
+        currentAnswers.push(optionKey)
+      }
+    } else {
+      const idx = currentAnswers.indexOf(optionKey)
+      if (idx > -1) {
+        currentAnswers.splice(idx, 1)
+      }
+    }
+    userAnswers.value[index] = [...currentAnswers] // Trigger reactivity
+  } else {
+    // Radio: set single value
+    userAnswers.value[index] = optionKey
+  }
+}
+
 const handleCheckAnswer = (index, isMulti) => {
   const q = questions.value[index]
   const user = userAnswers.value[index]
   let isCorrect = false
 
   if (isMulti) {
-    // Auto-select all correct answers
-    userAnswers.value[index] = q.correct
+    // Multi-select: compare arrays
+    const correctArray = Array.isArray(q.correct) ? q.correct : [q.correct]
+    const userArray = Array.isArray(user) ? user : []
     
-    const correctArray = Array.isArray(q.correct) ? q.correct : (typeof q.correct === 'string' ? q.correct.split('') : [q.correct])
-    const selected = [...correctArray].sort()
-    const correct = [...correctArray].sort()
-    isCorrect = JSON.stringify(selected) === JSON.stringify(correct)
-    userSelectedStr.value[index] = selected.length > 0 ? selected.join(', ') : 'なし'
+    const correctSorted = [...correctArray].sort()
+    const userSorted = [...userArray].sort()
+    
+    isCorrect = JSON.stringify(correctSorted) === JSON.stringify(userSorted)
+    userSelectedStr.value[index] = userArray.length > 0 ? userArray.join(', ') : 'なし'
   } else {
+    // Single select: compare strings
     if (!user) {
       userSelectedStr.value[index] = 'なし'
       isCorrect = false
